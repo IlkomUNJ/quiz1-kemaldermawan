@@ -1,89 +1,196 @@
 #include <iostream>
+#include <vector>
 #include "bank_customer.h"
 #include "buyer.h"
 
 enum PrimaryPrompt{LOGIN, REGISTER, EXIT};
+enum RegisterPrompt { CREATE_BUYER, CREATE_SELLER, BACK };
 
 using namespace std;
 
 int main() {
-    //create a loop prompt 
+    vector<BankCustomer> bankCustomers;
+    vector<Buyer> buyers;
+
+    int buyerCounter = 1;
+    int bankCustomerCounter = 1;
+
     PrimaryPrompt prompt = LOGIN;
     while (prompt != EXIT) {
         cout << "Select an option: " << endl;
         cout << "1. Login" << endl;
         cout << "2. Register" << endl;
         cout << "3. Exit" << endl;
+
         int choice;
         cin >> choice;
         prompt = static_cast<PrimaryPrompt>(choice - 1);
+
         switch (prompt) {
-            case LOGIN:
+            case LOGIN: {
                 cout << "Login selected." << endl;
-                /* if Login is selected, based on authority then provide options:
-                assume user is logged in as Buyer for now
-                1. Chek Account Status (will display if user is Buyer or Seller or both and linked banking account status)
-                Will display Buyer, Seller and Banking Account details
-                2. Upgrade Account to Seller
-                Will prompt user to enter Seller details and create a Seller account linked to Buyer account
-                Will reject if a user dont have a banking account linked
-                3. Create Banking Account (if not already linked), will be replaced with banking functions
-                Must provides: initial deposit amount, Address, Phone number, Email
-                Banking functions will provides: Balance checking, Transaction History, Deposit, Withdraw
-                4. Browse Store Functionality
-                Will display all stores initially
-                Need to select a store to browse each store inventory
-                Will display all items in the store inventory
-                After selecting an item, will display item details and option to add to cart
-                After adding to cart, will notify user item is added to cart
-                5. Order Functionality
-                Will display all items in cart
-                Will provide option to remove item from cart
-                Will provide option to checkout
-                After checkout invoide will be generated (will go to payment functionality)
-                6. Payment Functionality
-                Will display all listed invoices
-                Pick an invoice to pay
-                Will display invoice details and total amount
-                Will provide option to pay invoice
-                Payment is done through confirmation dialogue
-                In confirmation dialogue, will display account balance as precursor
-                User will need to manually enter invoice id to pay
-                After paying balance will be redacted from buyer and added to the responding seller account
-                After payment, order status will be changed to paid
-                7. Logout (return to main menu)
-                Display confirmation dialogue
-                If confirmed, return to main menu
-                If not, return to Buyer menu
-                8. Delete Account (remove both Buyer and Seller account and relevant banking account)
-                Display confirmation dialogue
-                If confirmed, delete account and return to main menu
-                If not, return to Buyer menu
-                assume user is logged in as Seller for now
-                9. Check Inventory
-                10. Add Item to Inventory
-                11. Remove Item from Inventory
-                12. View Orders (will display all orders placed to this seller
-                Only orders with paid status will be listed
-                Order details will listing items, quantity, total amount, buyer details, order status (paid, cancelled, completed)
-                extra functions
-                9. Exit to main Menu
-                10. Exit Program
-                **/
+                if (buyers.empty()) {
+                    cout << "No buyers registered yet. Please register first." << endl;
+                    break;
+                }
+
+                cout << "Enter Buyer ID: ";
+                int loginId;
+                cin >> loginId;
+
+                Buyer* loggedInBuyer = nullptr;
+                for (auto &b : buyers) {
+                    if (b.getId() == loginId) {
+                        loggedInBuyer = &b;
+                        break;
+                    }
+                }
+
+                if (!loggedInBuyer) {
+                    cout << "Invalid Buyer ID." << endl;
+                    break;
+                }
+
+                bool inSession = true;
+                while (inSession) {
+                    cout << "Buyer Menu" << endl;
+                    cout << "1. Check Account Status" << endl;
+                    cout << "2. Upgrade Account to Seller (NOT IMPLEMENTED - TODO)" << endl;
+                    cout << "3. Banking Functions" << endl;
+                    cout << "4. Logout" << endl;
+
+                    int menuChoice;
+                    cin >> menuChoice;
+
+                    switch (menuChoice) {
+                        case 1:
+                            cout << " Account Info " << endl;
+                            loggedInBuyer->getAccount().printInfo();
+                            break;
+
+                        case 2:
+                            cout << "Upgrade to Seller selected" << endl;
+                            cout << "TODO: Implement seller creation, link to Buyer + BankAccount. " << endl;
+                            break;
+
+                        case 3: {
+                            bool inBank = true;
+                            while (inBank) {
+                                cout << "Banking Menu" << endl;
+                                cout << "1. Check Balance" << endl;
+                                cout << "2. Deposit" << endl;
+                                cout << "3. Withdraw" << endl;
+                                cout << "4. Back" << endl;
+
+                                int bankChoice;
+                                cin >> bankChoice;
+
+                                switch (bankChoice) {
+                                    case 1:
+                                        cout << "Balance: $" 
+                                            << loggedInBuyer->getAccount().getBalance() << endl;
+                                        break;
+                                    case 2: {
+                                        cout << "Enter deposit amount: ";
+                                        double amt; cin >> amt;
+                                        if (amt <= 0) {
+                                            cout << "Invalid amount." << endl;
+                                        } else {
+                                            loggedInBuyer->getAccount().addBalance(amt);
+                                            cout << "Deposited $" << amt << ". New balance: $" << loggedInBuyer->getAccount().getBalance() << endl;
+                                        }
+                                        break;
+                                    }
+                                    case 3: {
+                                        cout << "Enter withdraw amount: ";
+                                        double amt; cin >> amt;
+                                        if (amt <= 0) {
+                                            cout << "Invalid amount." << endl;
+                                        } else {
+                                            bool ok = loggedInBuyer->getAccount().withdrawBalance(amt);
+                                            if (ok) {
+                                                cout << "Withdrawn $" << amt << ". New balance: $" << loggedInBuyer->getAccount().getBalance() << endl;
+                                            }
+                                        }
+                                        break;
+                                    }
+                                    case 4:
+                                        inBank = false;
+                                        break;
+                                    default:
+                                        cout << "Invalid option." << endl;
+                                        break;
+                                }
+                            }
+                            break;
+                        }
+
+                        case 4:
+                            cout << "Logging out..." << endl;
+                            inSession = false;
+                            break;
+
+                        default:
+                            cout << "Invalid option." << endl;
+                            break;
+                    }
+                } 
                 break;
-            case REGISTER:
-                cout << "Register selected." << endl;
-                /* if register is selected then went throuhh registration process:
-                1. Create a new Buyer Account
-                Must provides: Name, Home Address, Phone number, Email
-                2. Option to create a Seller Account (will be linked to Buyer account)
-                Must provides: Store Name, Store Address, Store Phone number, Store Email
-                After finished immediately logged in as Buyer/Seller
-                */
+            }
+
+            case REGISTER: {
+                RegisterPrompt regPrompt = CREATE_BUYER;
+                while (regPrompt != BACK) {
+                    cout << "Register selected" << endl;
+                    cout << "1. Create Buyer Account" << endl;
+                    cout << "2. Create Seller Account" << endl;
+                    cout << "3. Back" << endl;
+
+                    int regChoice;
+                    cin >> regChoice;
+                    regPrompt = static_cast<RegisterPrompt>(regChoice - 1);
+
+                    switch (regPrompt) {
+                        case CREATE_BUYER: {
+                            string name;
+                            double initDeposit;
+                            cout << "Enter Buyer Name: ";
+                            cin >> ws;
+                            getline(cin, name);
+                            cout << "Enter Initial Deposit: ";
+                            cin >> initDeposit;
+                            if (initDeposit < 0) initDeposit = 0.0;
+
+                            BankCustomer bc(bankCustomerCounter++, name, initDeposit);
+                            bankCustomers.push_back(bc);
+
+                            buyers.emplace_back(buyerCounter++, name, bankCustomers.back());
+                            cout << "Buyer created. Buyer ID: " << buyers.back().getId() << ", Bank ID: " << bankCustomers.back().getId() << endl;
+                            break;
+                        }
+
+                        case CREATE_SELLER:
+                            cout << "Create Seller Account" << endl;
+                            cout << "Currently: please first create a Buyer account, then ask instructor for upgrade steps." << endl;
+                            break;
+
+                        case BACK:
+                            cout << "Returning to main menu." << endl;
+                            break;
+
+                        default:
+                            cout << "Invalid option." << endl;
+                            break;
+                    }
+                }
                 break;
-            case EXIT:
-                cout << "Exiting." << std::endl;
+            }
+
+            case EXIT: {
+                cout << "Exiting program..." << endl;
                 break;
+            }
+
             default:
                 cout << "Invalid option." << endl;
                 break;
@@ -91,7 +198,5 @@ int main() {
         cout << endl;
     }
 
-    //BankCustomer customer1(1, "Alice", 1000.0);
-    //Buyer buyer1(1, customer1.getName(), customer1);
-    return 1;
+    return 0;
 }
